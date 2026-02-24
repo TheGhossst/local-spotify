@@ -22,7 +22,13 @@ export function pathToId(filePath: string): string {
 
 export function idToPath(id: string): string {
   const rel = Buffer.from(id, "base64url").toString("utf8");
-  return path.join(MUSIC_DIR, rel);
+  const resolved = path.join(MUSIC_DIR, rel);
+  // Guard against path-traversal attacks: the resolved path must stay inside MUSIC_DIR.
+  const musicDirWithSep = MUSIC_DIR.endsWith(path.sep) ? MUSIC_DIR : MUSIC_DIR + path.sep;
+  if (resolved !== MUSIC_DIR && !resolved.startsWith(musicDirWithSep)) {
+    throw new Error("Forbidden");
+  }
+  return resolved;
 }
 
 let cache: Map<string, string> | null = null;

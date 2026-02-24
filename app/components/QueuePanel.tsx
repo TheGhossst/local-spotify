@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 
@@ -86,12 +85,11 @@ export default function QueuePanel() {
                 style={{ background: "var(--bg)" }}
               >
                 {item.song.hasArtwork && !imgError ? (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={`/api/artwork/${item.song.id}`}
                     alt={item.song.album}
-                    fill
-                    sizes="36px"
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                     onError={() =>
                       setImgErrors((prev) => ({
                         ...prev,

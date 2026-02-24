@@ -6,10 +6,15 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const filePath = idToPath(id);
+  let filePath: string;
+  try {
+    filePath = idToPath(id);
+  } catch {
+    return new NextResponse(null, { status: 404 });
+  }
 
   try {
     const { artworkBuffer, artworkMime } = await parseAudioFile(filePath);

@@ -36,7 +36,7 @@ export default function SongCard({
             <span
               className="material-symbols-outlined text-base leading-none"
               style={{
-                color: "#2bee79",
+                color: "#ffffff",
                 fontVariationSettings: isPlaying ? "'FILL' 1" : "'FILL' 0",
               }}
             >
@@ -52,13 +52,13 @@ export default function SongCard({
         <div className="flex flex-col min-w-0">
           <span
             className="font-semibold text-sm truncate transition-colors"
-            style={{ color: isActive ? "#2bee79" : "#ffffff" }}
+            style={{ color: "#ffffff" }}
           >
             {song.title}
           </span>
           <span
             className="text-xs truncate transition-colors"
-            style={{ color: isActive ? "rgba(43,238,121,0.65)" : "#64748b" }}
+            style={{ color: isActive ? "rgba(255,255,255,0.6)" : "#64748b" }}
           >
             {song.artist}
           </span>
@@ -68,7 +68,7 @@ export default function SongCard({
       <div className="flex items-center gap-2 shrink-0 ml-2">
         <span
           className="text-xs tabular-nums"
-          style={{ color: isActive ? "rgba(43,238,121,0.65)" : "#475569" }}
+          style={{ color: isActive ? "rgba(255,255,255,0.5)" : "#475569" }}
         >
           {formatDuration(song.duration)}
         </span>

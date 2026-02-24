@@ -31,13 +31,13 @@ export default function MusicPlayer() {
   return (
     <div
       className="shrink-0 px-3 py-2 border-t border-white/5"
-      style={{ background: "#0d1c13" }}
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(16px)" }}
     >
       <div
         className="relative flex items-center gap-3 px-3 py-2 rounded-xl overflow-hidden"
         style={{ background: "rgba(255,255,255,0.05)" }}
       >
-        <div className="h-11 w-11 rounded-lg overflow-hidden shrink-0 bg-[#1a3d24]">
+        <div className="h-11 w-11 rounded-lg overflow-hidden shrink-0 bg-[#1a1a1a]">
           {showArtwork ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

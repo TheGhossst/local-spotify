@@ -45,7 +45,10 @@ type PlayerContextType = PlayerState & PlayerActions;
 const PlayerContext = createContext<PlayerContextType | null>(null);
 
 function generateId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   // Fallback for non-secure contexts (HTTP on iOS Safari, etc.)
@@ -79,25 +82,35 @@ function loadPersistedState(): Partial<PlayerState> {
   }
 }
 
-export function PlayerContextProvider({ children }: { children: React.ReactNode }) {
+export function PlayerContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const persisted = loadPersistedState();
 
   const [queue, setQueue] = useState<QueueItem[]>(persisted.queue ?? []);
   const [currentIndex, setCurrentIndex] = useState(persisted.currentIndex ?? 0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(persisted.shuffle ?? false);
-  const [repeat, setRepeat] = useState<RepeatMode>(persisted.repeat ?? RepeatMode.Off);
+  const [repeat, setRepeat] = useState<RepeatMode>(
+    persisted.repeat ?? RepeatMode.Off,
+  );
   const [volume, setVolumeState] = useState(persisted.volume ?? 1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showQueue, setShowQueue] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const shuffleRef = useRef(shuffle);
+  useEffect(() => {
+    shuffleRef.current = shuffle;
+  }, [shuffle]);
 
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ queue, currentIndex, shuffle, repeat, volume })
+      JSON.stringify({ queue, currentIndex, shuffle, repeat, volume }),
     );
   }, [queue, currentIndex, shuffle, repeat, volume]);
 
@@ -162,12 +175,30 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
   }, [handleEnded]);
 
   const playSong = useCallback((song: Song, replaceQueue?: Song[]) => {
-    const newQueue = replaceQueue
+    let newQueue = replaceQueue
       ? replaceQueue.map(makeQueueItem)
       : [makeQueueItem(song)];
-    const idx = newQueue.findIndex((qi) => qi.song.id === song.id);
+
+    let startIndex: number;
+
+    if (shuffleRef.current && replaceQueue && replaceQueue.length > 1) {
+      const clickedItem =
+        newQueue.find((qi) => qi.song.id === song.id) ?? newQueue[0];
+      const rest = newQueue.filter((qi) => qi.song.id !== song.id);
+      // Fisher-Yates shuffle
+      for (let i = rest.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rest[i], rest[j]] = [rest[j], rest[i]];
+      }
+      newQueue = [clickedItem, ...rest];
+      startIndex = 0;
+    } else {
+      startIndex = newQueue.findIndex((qi) => qi.song.id === song.id);
+      if (startIndex < 0) startIndex = 0;
+    }
+
     setQueue(newQueue);
-    setCurrentIndex(idx >= 0 ? idx : 0);
+    setCurrentIndex(startIndex);
     const audio = audioRef.current;
     if (audio) {
       audio.src = `/api/stream/${song.id}`;
@@ -295,17 +326,28 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
   // Stable refs so action handlers never need to be re-registered
   const nextRef = useRef(next);
   const prevRef = useRef(prev);
-  useEffect(() => { nextRef.current = next; }, [next]);
-  useEffect(() => { prevRef.current = prev; }, [prev]);
+  useEffect(() => {
+    nextRef.current = next;
+  }, [next]);
+  useEffect(() => {
+    prevRef.current = prev;
+  }, [prev]);
 
   // 1. Update metadata whenever the current track changes
   useEffect(() => {
-    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator))
+      return;
     const item = queue[currentIndex];
     if (!item) return;
     const { song } = item;
     const artwork: MediaImage[] = song.hasArtwork
-      ? [{ src: `${window.location.origin}/api/artwork/${song.id}`, sizes: "512x512", type: "image/jpeg" }]
+      ? [
+          {
+            src: `${window.location.origin}/api/artwork/${song.id}`,
+            sizes: "512x512",
+            type: "image/jpeg",
+          },
+        ]
       : [];
     navigator.mediaSession.metadata = new MediaMetadata({
       title: song.title,
@@ -317,13 +359,15 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
 
   // 2. Mirror play/pause state so lock-screen controls reflect reality
   useEffect(() => {
-    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator))
+      return;
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
   }, [isPlaying]);
 
   // 3. Register lock-screen action handlers once (play, pause, skip, seek)
   useEffect(() => {
-    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator))
+      return;
 
     navigator.mediaSession.setActionHandler("play", () => {
       audioRef.current?.play().catch(() => {});
@@ -331,8 +375,12 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
     navigator.mediaSession.setActionHandler("pause", () => {
       audioRef.current?.pause();
     });
-    navigator.mediaSession.setActionHandler("nexttrack", () => nextRef.current());
-    navigator.mediaSession.setActionHandler("previoustrack", () => prevRef.current());
+    navigator.mediaSession.setActionHandler("nexttrack", () =>
+      nextRef.current(),
+    );
+    navigator.mediaSession.setActionHandler("previoustrack", () =>
+      prevRef.current(),
+    );
     navigator.mediaSession.setActionHandler("seekto", (details) => {
       if (details.seekTime !== undefined && audioRef.current) {
         audioRef.current.currentTime = details.seekTime;
@@ -342,7 +390,7 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
       if (audioRef.current) {
         audioRef.current.currentTime = Math.max(
           0,
-          audioRef.current.currentTime - (details.seekOffset ?? 10)
+          audioRef.current.currentTime - (details.seekOffset ?? 10),
         );
       }
     });
@@ -350,25 +398,35 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
       if (audioRef.current) {
         audioRef.current.currentTime = Math.min(
           audioRef.current.duration || Infinity,
-          audioRef.current.currentTime + (details.seekOffset ?? 10)
+          audioRef.current.currentTime + (details.seekOffset ?? 10),
         );
       }
     });
 
     return () => {
       const actions: MediaSessionAction[] = [
-        "play", "pause", "nexttrack", "previoustrack",
-        "seekto", "seekbackward", "seekforward",
+        "play",
+        "pause",
+        "nexttrack",
+        "previoustrack",
+        "seekto",
+        "seekbackward",
+        "seekforward",
       ];
       actions.forEach((action) => {
-        try { navigator.mediaSession.setActionHandler(action, null); } catch { /* unsupported */ }
+        try {
+          navigator.mediaSession.setActionHandler(action, null);
+        } catch {
+          /* unsupported */
+        }
       });
     };
   }, []); // handlers use refs
 
   // 4. Keep the lock-screen progress bar in sync
   useEffect(() => {
-    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator))
+      return;
     if (!duration || !isFinite(duration)) return;
     try {
       navigator.mediaSession.setPositionState({
@@ -376,7 +434,9 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
         playbackRate: audioRef.current?.playbackRate ?? 1,
         position: Math.min(currentTime, duration),
       });
-    } catch { /* setPositionState not supported on this browser */ }
+    } catch {
+      /* setPositionState not supported on this browser */
+    }
   }, [currentTime, duration]);
   // ────────────────────────────────────────────────────────────────────────
 
@@ -416,6 +476,7 @@ export function PlayerContextProvider({ children }: { children: React.ReactNode 
 
 export function usePlayer(): PlayerContextType {
   const ctx = useContext(PlayerContext);
-  if (!ctx) throw new Error("usePlayer must be used within PlayerContextProvider");
+  if (!ctx)
+    throw new Error("usePlayer must be used within PlayerContextProvider");
   return ctx;
 }

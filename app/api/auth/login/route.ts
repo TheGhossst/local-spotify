@@ -10,6 +10,7 @@ function sessionResponse(token: string) {
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
+    secure: false,
   });
   return res;
 }
