@@ -3,7 +3,11 @@
 import { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 
-export default function MusicPlayer() {
+interface MusicPlayerProps {
+  onOpen?: () => void;
+}
+
+export default function MusicPlayer({ onOpen }: MusicPlayerProps = {}) {
   const {
     queue,
     currentIndex,
@@ -37,34 +41,42 @@ export default function MusicPlayer() {
         className="relative flex items-center gap-3 px-3 py-2 rounded-xl overflow-hidden"
         style={{ background: "rgba(255,255,255,0.05)" }}
       >
-        <div className="h-11 w-11 rounded-lg overflow-hidden shrink-0 bg-[#1a1a1a]">
-          {showArtwork ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`/api/artwork/${currentItem.song.id}`}
-              alt={currentItem.song.album}
-              className="w-full h-full object-cover"
-              onError={() => setArtworkError(true)}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary/40 text-xl">
-                music_note
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-bold truncate leading-tight">
-            {currentItem.song.title}
-          </p>
-          <p className="text-primary text-xs truncate leading-tight mt-0.5">
-            {currentItem.song.artist}
-          </p>
+        <div
+          className={`flex items-center gap-3 flex-1 min-w-0 ${onOpen ? "cursor-pointer" : ""}`}
+          onClick={onOpen}
+        >
+          <div className="h-11 w-11 rounded-lg overflow-hidden shrink-0 bg-[#1a1a1a]">
+            {showArtwork ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/artwork/${currentItem.song.id}`}
+                alt={currentItem.song.album}
+                className="w-full h-full object-cover"
+                onError={() => setArtworkError(true)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary/40 text-xl">
+                  music_note
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-bold truncate leading-tight">
+              {currentItem.song.title}
+            </p>
+            <p className="text-primary text-xs truncate leading-tight mt-0.5">
+              {currentItem.song.artist}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-1 pr-1 shrink-0">
           <button
-            onClick={prev}
+            onClick={(e) => {
+              e.stopPropagation();
+              prev();
+            }}
             className="text-white/70 hover:text-white transition-colors p-1"
             aria-label="Previous"
           >

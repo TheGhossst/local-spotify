@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { Song } from "@/app/lib/types";
 import { formatTotalDuration } from "@/app/lib/format";
 import { usePlayer } from "@/app/context/PlayerContext";
@@ -8,6 +8,7 @@ import ArtworkDisplay from "./ArtworkDisplay";
 import PlaybackControls from "./PlaybackControls";
 import MusicPlayer from "./MusicPlayer";
 import SongList from "./SongList";
+import NowPlayingModal from "./NowPlayingModal";
 
 interface MobileViewProps {
   songs: Song[];
@@ -24,6 +25,7 @@ export default function MobileView({
 }: MobileViewProps) {
   const { queue, currentIndex, toggleShowQueue, showQueue } = usePlayer();
   const mobileMainRef = useRef<HTMLElement>(null);
+  const [showNowPlaying, setShowNowPlaying] = useState(false);
   const currentItem = queue[currentIndex];
 
   return (
@@ -119,7 +121,7 @@ export default function MobileView({
           </div>
 
           <div className="flex items-center justify-center w-full pt-1">
-            <PlaybackControls size="mobile" />
+            <PlaybackControls size="mobile" songs={songs} />
           </div>
 
           <div className="relative w-full max-w-sm mt-1">
@@ -145,7 +147,13 @@ export default function MobileView({
         <div className="h-36" />
       </main>
 
-      <MusicPlayer />
+      <MusicPlayer
+        onOpen={currentItem ? () => setShowNowPlaying(true) : undefined}
+      />
+
+      {showNowPlaying && (
+        <NowPlayingModal onClose={() => setShowNowPlaying(false)} />
+      )}
 
       <nav
         className="shrink-0 flex items-center justify-around px-2 py-3 border-t border-white/5"

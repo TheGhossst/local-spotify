@@ -34,7 +34,7 @@ export default function MainLayout({ songs }: MainLayoutProps) {
       <div className="glow-blob glow-blob-tl" />
       <div className="glow-blob glow-blob-br" />
 
-      <DesktopSidebar onLogout={handleLogout} />
+      <DesktopSidebar onLogout={handleLogout} songs={songs} />
 
       <div className="hidden md:flex flex-col flex-1 overflow-hidden">
         <header

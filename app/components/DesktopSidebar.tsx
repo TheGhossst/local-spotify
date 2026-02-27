@@ -1,5 +1,6 @@
 "use client";
 
+import type { Song } from "@/app/lib/types";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { formatTime } from "@/app/lib/format";
 import ArtworkDisplay from "./ArtworkDisplay";
@@ -7,9 +8,13 @@ import PlaybackControls from "./PlaybackControls";
 
 interface DesktopSidebarProps {
   onLogout: () => void;
+  songs?: Song[];
 }
 
-export default function DesktopSidebar({ onLogout }: DesktopSidebarProps) {
+export default function DesktopSidebar({
+  onLogout,
+  songs,
+}: DesktopSidebarProps) {
   const {
     queue,
     currentIndex,
@@ -115,7 +120,7 @@ export default function DesktopSidebar({ onLogout }: DesktopSidebarProps) {
       </div>
 
       <div className="px-5 pt-3 shrink-0">
-        <PlaybackControls size="desktop" />
+        <PlaybackControls size="desktop" songs={songs} />
       </div>
 
       <div className="flex-1" />

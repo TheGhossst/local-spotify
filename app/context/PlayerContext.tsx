@@ -25,6 +25,7 @@ interface PlayerState {
 
 interface PlayerActions {
   playSong: (song: Song, replaceQueue?: Song[]) => void;
+  playAll: (songs: Song[]) => void;
   addToQueue: (song: Song) => void;
   removeFromQueue: (queueId: string) => void;
   clearQueue: () => void;
@@ -206,6 +207,17 @@ export function PlayerContextProvider({
     }
     setIsPlaying(true);
   }, []);
+
+  const playAll = useCallback(
+    (songs: Song[]) => {
+      if (!songs.length) return;
+      const target = shuffleRef.current
+        ? songs[Math.floor(Math.random() * songs.length)]
+        : songs[0];
+      playSong(target, songs);
+    },
+    [playSong],
+  );
 
   const addToQueue = useCallback((song: Song) => {
     setQueue((q) => [...q, makeQueueItem(song)]);
@@ -453,6 +465,7 @@ export function PlayerContextProvider({
         duration,
         showQueue,
         playSong,
+        playAll,
         addToQueue,
         removeFromQueue,
         clearQueue,

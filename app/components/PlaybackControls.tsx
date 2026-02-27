@@ -1,12 +1,17 @@
 "use client";
 
+import type { Song } from "@/app/lib/types";
 import { usePlayer } from "@/app/context/PlayerContext";
 
 interface PlaybackControlsProps {
   size: "desktop" | "mobile";
+  songs?: Song[];
 }
 
-export default function PlaybackControls({ size }: PlaybackControlsProps) {
+export default function PlaybackControls({
+  size,
+  songs,
+}: PlaybackControlsProps) {
   const {
     togglePlay,
     toggleShuffle,
@@ -16,7 +21,17 @@ export default function PlaybackControls({ size }: PlaybackControlsProps) {
     repeat,
     next,
     prev,
+    queue,
+    playAll,
   } = usePlayer();
+
+  function handlePlayPause() {
+    if (!queue.length && songs?.length) {
+      playAll(songs);
+    } else {
+      togglePlay();
+    }
+  }
 
   const isDesktop = size === "desktop";
 
@@ -62,7 +77,7 @@ export default function PlaybackControls({ size }: PlaybackControlsProps) {
       </button>
 
       <button
-        onClick={togglePlay}
+        onClick={handlePlayPause}
         className={`${
           isDesktop ? "w-14 h-14" : "w-16 h-16"
         } rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border border-white/10`}
